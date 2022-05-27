@@ -47,7 +47,9 @@ import com.android.launcher3.icons.ThemedIconDrawable.ThemeData;
 import com.android.launcher3.util.SafeCloseable;
 
 import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserFactory;
 
+import java.io.InputStreamReader;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Map;
@@ -191,9 +193,10 @@ public class IconProvider {
         ArrayMap<String, ThemeData> map = new ArrayMap<>();
         try {
             Resources res = mContext.getResources();
-            int resID = res.getIdentifier(THEMED_ICON_MAP_FILE, "xml", mContext.getPackageName());
+            int resID = res.getIdentifier(THEMED_ICON_MAP_FILE, "raw", mContext.getPackageName());
             if (resID != 0) {
-                XmlResourceParser parser = res.getXml(resID);
+                XmlPullParser parser = XmlPullParserFactory.newInstance().newPullParser();
+                parser.setInput(new InputStreamReader(res.openRawResource(resID)));
                 final int depth = parser.getDepth();
 
                 int type;
@@ -208,7 +211,8 @@ public class IconProvider {
                     }
                     if (TAG_ICON.equals(parser.getName())) {
                         String pkg = parser.getAttributeValue(null, ATTR_PACKAGE);
-                        int iconId = parser.getAttributeResourceValue(null, ATTR_DRAWABLE, 0);
+                        String drawable = parser.getAttributeValue(null, ATTR_DRAWABLE);
+                        int iconId = res.getIdentifier(drawable.split("/")[1], drawable.split("/")[0].substring(1), mContext.getPackageName());
                         if (iconId != 0 && !TextUtils.isEmpty(pkg)) {
                             map.put(pkg, new ThemeData(res, iconId));
                         }
